@@ -1,13 +1,25 @@
 import sys
 import math
-
+import subprocess
+import traceback
+def check_rtx4080_support():
+    try:
+        output = subprocess.check_output(["nvidia-smi"], universal_newlines=True)
+        if "4080" in output:
+            return True
+        else:
+            return False
+    except:
+        traceback.print_exc()
+        return False
 
 class Config:
     mongo_client_username = 'huyaoqi'
     mongo_client_password = 'hwt439876.'
     if 'win' in sys.platform:
-        mongo_client_host = 'huyaoqi.tpddns.cn:27017'
+        # mongo_client_host = 'huyaoqi.tpddns.cn:27017'
         # mongo_client_host = '124.70.80.182:27017'
+        mongo_client_host = '127.0.0.1:27017' if check_rtx4080_support() else 'huyaoqi.tpddns.cn:27017'
     else:
         mongo_client_host = '124.70.80.182:27017'
     mongo_client_url = f'mongodb://{mongo_client_username}:{mongo_client_password}@{mongo_client_host}/'
@@ -21,4 +33,5 @@ class Config:
     # result_img_path = 'http://127.0.0.1:83/C%3A/Users/13756/OneDrive%20-%20integrate%20collaborative%20models/%E6%96%87%E6%A1%A3/paper_daily_format/paper_daily_back_flask/result/'
     # result_img_path = 'http://127.0.0.1:83/C%3A/Users/13756/Documents/GitHub/paper_daily_format/paper_daily_back_flask/result/'
     result_img_path = 'http://huyaoqi.tpddns.cn:83/C%3A/Users/13756/Documents/GitHub/paper_daily_format/paper_daily_back_flask/result/'
+    save_path='D:/arxiv_data/'
 config = Config()
