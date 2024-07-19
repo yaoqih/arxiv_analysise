@@ -34,9 +34,11 @@ def papers_info(id_list):
     success_num=0
     for paper_data in client.results(search_by_id):
         # print(paper_data,"paper_data")
+        if db_data.find_one({"entry_id":paper_data.entry_id}):
+            success_num+=1
+            continue
         paper_data_dict=translate_dict(paper_data)
         db_data.update_one({"entry_id":paper_data_dict['entry_id']},{"$set":paper_data_dict},upsert=True)
-        success_num+=1
     return success_num
 def translate_dict(arixv_result):
     arixv_result.authors = [author.name for author in arixv_result.authors]
@@ -61,7 +63,8 @@ def translate_dict(arixv_result):
         "refer_ids":[],
         "project_url":"",
         "content":"",
-        "meeting":""
+        "meeting":"",
+        "downloaded":False
     }
 def get_paper_infos(year,month):
     number_list_genrate=generate_nested_list()
@@ -70,10 +73,11 @@ def get_paper_infos(year,month):
         print(f'{year}{month}.{number_list[0]}-{year}{month}.{number_list[-1]}',success_num)
         if success_num<10:
             print(f'{year}{month}.{number_list[0]}-{year}{month}.{number_list[-1]}',"break")
+            open("log.txt","a").write(f'{year}{month}.{number_list[0]}-{year}{month}.{number_list[-1]}\n')
             break
 if __name__ =="__main__":
     # get_paper_infos('08','01')
-    for year in range(8,23):
+    for year in range(13,23):
         p=Pool(12)
         p.starmap(get_paper_infos,[[number_format(year,2),number_format(i,2)] for i in range(1,13)])
         p.close()
