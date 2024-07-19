@@ -42,6 +42,7 @@ def download_pdf(arxiv_data):
                 print("reCAPTCHA")
                 sys.exit(0)
             if response.status_code != 200:
+                time.sleep(4)
                 print(pdf_url,"status_code:",response.status_code)
                 return
             with open(pdf_path, 'wb') as f:
@@ -54,6 +55,8 @@ def download_pdf(arxiv_data):
                 os.remove(pdf_path_temp)
             if check_pdf_integrity(pdf_path):
                 db_data.update_one({"entry_id":arxiv_data['entry_id']},{"$set":{"downloaded":True}})
+            else:
+                os.remove(pdf_path)
         except Exception as e:
             print(e)
             # db_data.update_one({"entry_id":arxiv_data['entry_id']},{"$set":{"downloaded":False}})
@@ -90,7 +93,7 @@ if __name__ == "__main__":
     
     # 指定进程数和每个进程的线程数
     num_processes = 1
-    num_threads = 5
+    num_threads = 1
     
     process_with_pools([i for i in db_data.find({"downloaded": False,"primary_category":{"$regex": "^cs"}})], num_processes, num_threads)
 
