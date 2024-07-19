@@ -47,9 +47,9 @@ def compress_pdf(input_path, output_path, power=3):
                     f'-sOutputFile={output_path}',
                      input_path]
     )
-if __name__ == "__main__":
-    work_path1 = r'Z:/彭俊喜/.pdf'
-    in_path = r"2407,10943.pdf"  # 需要压缩的PDF文件
-    out_path = r"2407,10943_c.pdf"  # 压缩后的PDF文件路径
-    # Lossless_Compression(in_path, out_path)
-    compress_pdf(in_path,out_path)
+# if __name__ == "__main__":
+    # work_path1 = r'Z:/彭俊喜/.pdf'
+    # in_path = r"2407,10943.pdf"  # 需要压缩的PDF文件
+    # out_path = r"2407,10943_c.pdf"  # 压缩后的PDF文件路径
+    # # Lossless_Compression(in_path, out_path)
+    # compress_pdf(in_path,out_path)
