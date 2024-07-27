@@ -10,7 +10,7 @@ def check_rtx4080_support():
         else:
             return False
     except:
-        traceback.print_exc()
+        # traceback.print_exc()
         return False
 
 class Config:
