@@ -19,17 +19,17 @@ def check_pdf_integrity(file_path):
                 # print(f"PDF文件 '{file_path}' 是空白的（没有页面）.")
                 return False
 
-            # 检查是否所有页面都是空白的
-            all_pages_blank = True
-            for page in pdf_reader.pages:
-                text = page.extract_text().strip()
-                if text:
-                    all_pages_blank = False
-                    break
+            # # 检查是否所有页面都是空白的
+            # all_pages_blank = True
+            # for page in pdf_reader.pages:
+            #     text = page.extract_text().strip()
+            #     if text:
+            #         all_pages_blank = False
+            #         break
 
-            if all_pages_blank:
-                # print(f"PDF文件 '{file_path}' 可能是空白的（所有页面都没有文本）.")
-                return False
+            # if all_pages_blank:
+            #     # print(f"PDF文件 '{file_path}' 可能是空白的（所有页面都没有文本）.")
+            #     return False
 
             # print(f"PDF文件 '{file_path}' 完整且包含内容.")
             # print(f"总页数: {num_pages}")

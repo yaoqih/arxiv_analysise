@@ -36,7 +36,7 @@ def papers_info(id_list):
     for paper_data in client.results(search_by_id):
         # print(paper_data,"paper_data")
         success_num+=1
-        if db_data.find_one({"entry_id":paper_data.entry_id}):
+        if db_data.find_one({"entry_id":{'$regex':f'{paper_data.entry_id.split("/")[-1].split("v")[0]}v'}}):
             continue
         paper_data_dict=translate_dict(paper_data)
         db_data.update_one({"entry_id":paper_data_dict['entry_id']},{"$set":paper_data_dict},upsert=True)
