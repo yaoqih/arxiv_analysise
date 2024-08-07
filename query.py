@@ -68,14 +68,14 @@ def find_neighbors(entry_id, depth=3):
     return {'nodes': nodes, 'links': links}
 
 
-# 替换为你要查询的起始论文的entry_id
-entry_id = 'http://arxiv.org/abs/2106.13008v5'
-
-# 获取三度之内的邻居
-result = find_neighbors(entry_id)
-
-# 保存为JSON文件
-with open('result.json', 'w') as f:
-    json.dump(result, f, indent=4,default=datetime_converter)
-
-print("结果已保存为result.json")
+# # 替换为你要查询的起始论文的entry_id
+# entry_id = 'http://arxiv.org/abs/2106.13008v5'
+#
+# # 获取三度之内的邻居
+# result = find_neighbors(entry_id)
+#
+# # 保存为JSON文件
+# with open('result.json', 'w') as f:
+#     json.dump(result, f, indent=4,default=datetime_converter)
+#
+# print("结果已保存为result.json")
