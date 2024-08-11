@@ -2,7 +2,7 @@ import arxiv
 import pymongo
 from config import config
 from multiprocessing import Pool
-
+from  datetime import datetime
 myclient = pymongo.MongoClient(config.mongo_client_url)
 mydb = myclient["paper_connect"]
 db_data = mydb["data"]
@@ -84,8 +84,16 @@ def get_paper_infos(year,month):
             break
 if __name__ =="__main__":
     # get_paper_infos('08','01')
-    for year in range(24,25):
-        p=Pool(6)
-        p.starmap(get_paper_infos,[[number_format(year,2),number_format(i,2)] for i in range(7,8)])
-        p.close()
-        p.join()
+    # for year in range(24,25):
+    #     p=Pool(6)
+    #     p.starmap(get_paper_infos,[[number_format(year,2),number_format(i,2)] for i in range(7,8)])
+    #     p.close()
+    #     p.join()
+    year = datetime.now().year%100
+    month = datetime.now().month
+    get_paper_infos(number_format(year, 2), number_format(month, 2))
+    month -= 1
+    if month == 0:
+        year -= 1
+        month = 12
+    get_paper_infos(number_format(year, 2), number_format(month, 2))

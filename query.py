@@ -11,7 +11,7 @@ client = MongoClient(config.mongo_client_url)
 db = client['paper_connect']
 collection = db['data']
 
-def find_neighbors(entry_id, depth=3):
+def find_neighbors(entry_id, depth=2):
     visited = set()
     nodes = []
     links = []

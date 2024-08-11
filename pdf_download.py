@@ -1,6 +1,5 @@
 import traceback
 from tqdm import tqdm
-import arxiv
 import pymongo
 from config import config
 from multiprocessing import Pool
@@ -32,7 +31,11 @@ session.headers  = {
     "Upgrade-Insecure-Requests": "1",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWe8bKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"
 }
-
+proxies = {
+    'http': '',
+    'https': ''
+}
+session.proxies = proxies
 myclient = pymongo.MongoClient(config.mongo_client_url)
 mydb = myclient["paper_connect"]
 db_data = mydb["data"]

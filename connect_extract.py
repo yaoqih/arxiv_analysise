@@ -76,11 +76,11 @@ def extract_arxiv_citations(arxiv_data):
 
 if __name__ == "__main__":
 
-    # for arxiv_data in db_data.find(filte):
-    #     extract_arxiv_citations(arxiv_data)
-    pool = Pool(pool_num)
-    pool.map_async(extract_arxiv_citations, [_ for _ in db_data.find(filte)])
-    pool.close()
-    pool.join()
+    for arxiv_data in db_data.find(filte):
+        extract_arxiv_citations(arxiv_data)
+    # pool = Pool(pool_num)
+    # pool.map_async(extract_arxiv_citations, [_ for _ in db_data.find(filte)])
+    # pool.close()
+    # pool.join()
     # extract_arxiv_citations({"entry_id": "http://arxiv.org/abs/2304.00006v1"})
     # extract_arxiv_citations({"entry_id":"http://arxiv.org/abs/2304.00005v1"})
