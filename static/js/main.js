@@ -2,7 +2,7 @@ $(document).ready(function () {
     var myChart = echarts.init(document.getElementById('chart'));
     function getColorByDate(dateString) {
         var date = new Date(dateString);
-        var startDate = new Date('2000-01-01');
+        var startDate = new Date('2015-01-01');
         var endDate = new Date();
         var timeRange = endDate - startDate;
         var timeElapsed = date - startDate;
@@ -14,11 +14,13 @@ $(document).ready(function () {
     }
 
     function performSearch(query) {
+        myChart.showLoading();
         $.ajax({
             url: '/search',
             method: 'POST',
             data: { query: query },
             success: function (data) {
+                myChart.hideLoading();
                 // 计算每个节点被引用的次数
                 var citationCount = {};
                 data.links.forEach(function (link) {
@@ -77,6 +79,13 @@ $(document).ready(function () {
                                 }
                             }
                         ],
+                        emphasis: {
+                          focus: 'adjacency',
+                          label: {
+                            position: 'right',
+                            show: true
+                          }
+                        },
                         data: data.nodes.map(function (node) {
                             var citations = citationCount[node.entry_id] || 0;
                             return {
@@ -110,8 +119,8 @@ $(document).ready(function () {
                             curveness: 0
                         },
                         force: {
-                            repulsion: 300,
-                            edgeLength: 300  // 可以调整这个值来改变节点间的距离
+                            repulsion: 500,
+//                            edgeLength: 300  // 可以调整这个值来改变节点间的距离
                         }
 
                     }]

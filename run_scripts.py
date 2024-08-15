@@ -12,7 +12,7 @@ for file in python_files:
     print(f"正在运行 {file}...")
     try:
         # 使用subprocess运行Python文件
-        subprocess.run(["C:\ProgramData\anaconda3\envs\arxiv_analysise\python.exe", file], check=True)
+        subprocess.run([r"C:\ProgramData\anaconda3\envs\arxiv_analysise\python.exe", file], check=True)
         print(f"{file} 运行完成")
     except subprocess.CalledProcessError as e:
         print(f"运行 {file} 时出错: {e}")
