@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
     <title>Paper Citation Network</title>
     <script src="https://lib.baomitu.com/echarts/5.5.0/echarts.js"></script>
     <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
@@ -15,11 +17,36 @@
 
   gtag('config', 'G-5SSWCR3TL4');
 </script>
+<style>
+  .image-container {
+      display: none; /* 默认不显示图片 */
+      position: absolute; /* 绝对定位 */
+      z-index: 10; /* 确保图片在按钮上方显示 */
+  }
+</style>
 </head>
 <body>
     <input type="text" id="search-input" placeholder="Enter arxiv id">
-    <button id="search-button">Search</button><a href="https://arxiv.org/" target="_blank">前往arxiv</a>
+    <button id="search-button">Search</button>
+    <button class="button" onmouseover="showImage()" onmouseout="hideImage()">关注作者公众号</button>
+    <a href="https://arxiv.org/" target="_blank">前往arxiv</a>
+    <div class="image-container" id="myImage">
+      <img src="{{ url_for('static', filename='qrcode_for.jpg') }}" alt="作者公众号" />
+    </div>
     <div id="chart" style="width: 100vw; height: 100vh;"></div>
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
+<script>
+  function showImage() {
+      const imageContainer = document.getElementById('myImage');
+      imageContainer.style.display = 'block'; // 显示图片
+  }
+
+  function hideImage() {
+      const imageContainer = document.getElementById('myImage');
+      imageContainer.style.display = 'none'; // 隐藏图片
+  }
+</script>
+
 </html>
