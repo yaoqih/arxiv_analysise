@@ -23,9 +23,12 @@ $(document).ready(function () {
                 myChart.hideLoading();
                 // 计算每个节点被引用的次数
                 var citationCount = {};
-                data.links.forEach(function (link) {
-                    citationCount[link.target] = (citationCount[link.target] || 0) + 1;
+                data.nodes.forEach(function (node) {
+                    citationCount[node.entry_id] = node.refered_ids.length;
                 });
+                // data.links.forEach(function (link) {
+                //     citationCount[link.target] = (citationCount[link.target] || 0) + 1;
+                // });
                 // 计算引用次数的阈值（前10%）
                 var citationValues = Object.values(citationCount);
                 citationValues.sort((a, b) => b - a);
@@ -43,6 +46,7 @@ $(document).ready(function () {
                                     'ID: ' + params.data.entry_id + '<br/>' +
                                     'Year: ' + params.data.published + '<br/>' +
                                     'Citations: ' + (citationCount[params.data.entry_id] || 0);
+                                'Color: ' + params.color + ' (represents publication date)';
                             }
                             return params.name;
                         }
@@ -60,7 +64,6 @@ $(document).ready(function () {
                         roam: true,
                         draggable: true,  // 使节点可拖动
                         edgeSymbol: ['circle', 'arrow'],
-                        focusNodeAdjacency: true,
                         edgeSymbolSize: [4, 10],
                         edgeLabel: {
                             fontSize: 20
@@ -94,7 +97,7 @@ $(document).ready(function () {
                                 title: node.title,
                                 entry_id: node.entry_id,
                                 published: node.published,
-                                symbolSize: 20 + (citationCount[node.entry_id] || 0) * 1, // 根据引用次数调整大小
+                                symbolSize: 20 + Math.log(citationCount[node.entry_id] || 0) * 10, // 根据引用次数调整大小
                                 x: null,  // 允许力导向算法初始化位置
                                 y: null,
                                 fixed: false,  // 节点初始不固定
@@ -118,25 +121,9 @@ $(document).ready(function () {
                             width: 2,
                             curveness: 0
                         },
-                        normal: {
-                            lineStyle: {
-                                // 线的颜色[ default: '#aaa' ]
-                                color: '#fff',
-                                // 线宽[ default: 1 ]
-                                width: 1,
-                                // 线的类型[ default: solid实线 ]   'dashed'虚线    'dotted'
-                                type: 'solid',
-                                // 图形透明度。支持从 0 到 1 的数字，为 0 时不绘制该图形。[ default: 0.5 ]
-                                opacity: 0.5,
-                                // 边的曲度，支持从 0 到 1 的值，值越大曲度越大。[ default: 0 ]
-                                curveness: 0.5
-                            }
-                        },
                         force: {
-                            repulsion: [300,700], // 节点之间的斥力
-                            gravity: 0.4, // 向中心的引力
-                            edgeLength: [10,50], // 边的长度
-                            friction: 0.6, // 摩擦力
+                            repulsion: 500,
+//                            edgeLength: 300  // 可以调整这个值来改变节点间的距离
                         }
 
                     }]
