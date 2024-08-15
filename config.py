@@ -19,9 +19,10 @@ class Config:
     if 'win' in sys.platform:
         # mongo_client_host = 'huyaoqi.tpddns.cn:27017'
         # mongo_client_host = '124.70.80.182:27017'
-        mongo_client_host = '127.0.0.1:27017' if check_rtx4080_support() else 'huyaoqi.tpddns.cn:27017'
+        mongo_client_host = '127.0.0.1:27017' 
     else:
-        mongo_client_host = '124.70.80.182:27017'
+        mongo_client_host = '127.0.0.1:27017' 
+        # mongo_client_host = '124.70.80.182:27017'
     mongo_client_url = f'mongodb://{mongo_client_username}:{mongo_client_password}@{mongo_client_host}/'
     # mongo_client_url=f'mongodb://127.0.0.1:27017/'
     ajax_origin_url = '127.0.0.1:5173'

@@ -69,6 +69,11 @@ def extract_arxiv_citations(arxiv_data):
         citations_res.remove(arxiv_data['entry_id'])
     # print(arxiv_data['entry_id'],citations_res)
     db_data.update_one({"entry_id":arxiv_data['entry_id']},{"$set":{"refer_ids":citations_res,"connect_extract":True}})
+    for ref_id in citations_res:
+        db_data.update_one(
+            {'entry_id': ref_id},
+            {'$addToSet': {'refered_ids': arxiv_data['entry_id']}}
+        )
 
 # 使用示例
 # pdf_path = 'D:/arxiv_data/2312/2312.15796v2.pdf'

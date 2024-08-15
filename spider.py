@@ -62,6 +62,7 @@ def translate_dict(arixv_result):
         "summary":arixv_result.summary,
         "updated":arixv_result.updated,
         "refer_ids":[],
+        "refered_ids":[],
         "project_url":"",
         "content":"",
         "meeting":"",
