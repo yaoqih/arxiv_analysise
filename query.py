@@ -53,17 +53,17 @@ def find_neighbors(entry_id, depth=2):
             nodes.append({**{'id': current_id}, **current_paper})
 
         # 找出引用了当前论文的论文
-        for neighbor_id in current_paper.get('refered_ids', []):
-            if neighbor_id not in visited:
-                links.append({'source': neighbor_id, 'target': current_id, 'id': len(links)})
-                dfs_up(neighbor_id, current_depth + 1)
+        # for neighbor_id in current_paper.get('refered_ids', []):
+        #     if neighbor_id not in visited:
+        #         links.append({'source': neighbor_id, 'target': current_id, 'id': len(links)})
+        #         dfs_up(neighbor_id, current_depth + 1)
 
-        # cursor = collection.find({'refer_ids': current_id})
-        # for citing_paper in cursor:
-        #     citing_id = citing_paper['entry_id']
-        #     if citing_id not in visited:
-        #         links.append({'source': citing_id, 'target': current_id, 'id': len(links)})
-        #         dfs_up(citing_id, current_depth + 1)
+        cursor = collection.find({'refer_ids': current_id})
+        for citing_paper in cursor:
+            citing_id = citing_paper['entry_id']
+            if citing_id not in visited:
+                links.append({'source': citing_id, 'target': current_id, 'id': len(links)})
+                dfs_up(citing_id, current_depth + 1)
 
     # 开始查找
     dfs_down(entry_id, 0)

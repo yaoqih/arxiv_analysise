@@ -1,16 +1,143 @@
 $(document).ready(function () {
     var myChart = echarts.init(document.getElementById('chart'));
+    window.addEventListener('resize', function () {
+        myChart.resize();
+    });
+
+    var searchData;
+    var query_id
+    var startDate, endDate;
+    var currentStartDate, currentEndDate;
+
+    function dateToTimestamp(date) {
+        return date.getTime();
+    }
+
+    function timestampToDate(timestamp) {
+        return new Date(timestamp);
+    }
+
+    function formatDate(date) {
+        return date.toISOString().split('T')[0];
+    }
+
     function getColorByDate(dateString) {
         var date = new Date(dateString);
-        var startDate = new Date('2015-01-01');
-        var endDate = new Date();
-        var timeRange = endDate - startDate;
-        var timeElapsed = date - startDate;
+        var timeRange = endDate.getTime() - startDate.getTime();
+        var timeElapsed = date.getTime() - startDate.getTime();
         var percentage = timeElapsed / timeRange;
 
         // 使用HSL颜色空间，从蓝色(240)到红色(0)
         var hue = 240 - (percentage * 240);
         return 'hsl(' + hue + ', 100%, 50%)';
+    }
+    function calculateFilteredData() {
+        var citationCount = {};
+        searchData.nodes.forEach(function (node) {
+            citationCount[node.entry_id] = node.refered_ids.length || 1;
+        });
+
+        var filteredNodes = searchData.nodes.filter(function (node) {
+            var nodeDate = new Date(node.published);
+            return nodeDate >= currentStartDate && nodeDate <= currentEndDate;
+        });
+
+        var filteredNodeIds = new Set(filteredNodes.map(node => node.entry_id));
+
+        // 重新计算引用计数，只考虑过滤后的节点
+        var filteredCitationCount = {};
+        filteredNodes.forEach(function (node) {
+            filteredCitationCount[node.entry_id] = node.refered_ids.filter(id => filteredNodeIds.has(id)).length || 1;
+        });
+
+        var citationValues = Object.values(filteredCitationCount);
+        citationValues.sort((a, b) => b - a);
+        var thresholdIndex = Math.floor(citationValues.length * 0.05);
+        var citationThreshold = citationValues[thresholdIndex] || 0;
+
+        var filteredLinks = searchData.links.filter(function (link) {
+            return filteredNodeIds.has(link.source) && filteredNodeIds.has(link.target);
+        });
+
+        return {
+            citationCount: filteredCitationCount,
+            citationThreshold: citationThreshold,
+            filteredNodes: filteredNodes,
+            filteredLinks: filteredLinks
+        };
+    }
+    function updateChart() {
+        if (!searchData) return;
+
+        var filteredData = calculateFilteredData();
+        var citationCount = filteredData.citationCount;
+        var citationThreshold = filteredData.citationThreshold;
+        var filteredNodes = filteredData.filteredNodes;
+        var filteredLinks = filteredData.filteredLinks;
+
+        var option = {
+            tooltip: {
+                formatter: function (params) {
+                    if (params.dataType === 'node') {
+                        return '<strong>' + params.data.title + '</strong><br/>' +
+                            'ID: ' + params.data.entry_id + '<br/>' +
+                            'Date: ' + params.data.published + '<br/>' +
+                            'Citations: ' + (citationCount[params.data.entry_id] || 0);
+                    }
+                    return params.name;
+                }
+            },
+            animationDurationUpdate: 1500,
+            animationEasingUpdate: 'quinticInOut',
+            series: [{
+                type: 'graph',
+                layout: 'force',
+                roam: true,
+                draggable: true,
+                data: filteredNodes.map(function (node) {
+                    var citations = citationCount[node.entry_id] || 0;
+                    return {
+                        id: node.entry_id,
+                        name: node.title,
+                        title: node.title,
+                        entry_id: node.entry_id,
+                        published: node.published,
+                        symbolSize: 20 + Math.log(citations || 1) * 20,
+                        x: null,
+                        y: null,
+                        itemStyle: {
+                            color: getColorByDate(node.published)
+                        },
+                        label: {
+                            show: citations >= citationThreshold,
+                            formatter: '{b}',
+                            color: getColorByDate(node.published)
+                        },
+                    };
+                }),
+                links: filteredLinks.map(function (link) {
+                    return {
+                        source: link.source,
+                        target: link.target
+                    };
+                }),
+                force: {
+                    repulsion: 500,
+                    edgeLength: 200
+                },
+                symbol: function (value, params) {
+                    // 使用字符串变量创建正则表达式
+                    let regex = new RegExp(query_id);
+
+                    // 使用正则表达式匹配ID
+                    if (regex.test(params.data.entry_id)) {
+                        return 'diamond';  // 将匹配的节点形状设置为菱形
+                    }
+                    return 'circle';  // 默认形状为圆形
+                }
+            }]
+        };
+        myChart.setOption(option);
     }
 
     function performSearch(query) {
@@ -21,114 +148,25 @@ $(document).ready(function () {
             data: { query: query },
             success: function (data) {
                 myChart.hideLoading();
-                // 计算每个节点被引用的次数
-                var citationCount = {};
-                data.nodes.forEach(function (node) {
-                    citationCount[node.entry_id] = node.refered_ids.length;
-                });
-                // data.links.forEach(function (link) {
-                //     citationCount[link.target] = (citationCount[link.target] || 0) + 1;
-                // });
-                // 计算引用次数的阈值（前10%）
-                var citationValues = Object.values(citationCount);
-                citationValues.sort((a, b) => b - a);
-                var thresholdIndex = Math.floor(citationValues.length * 0.05);
-                var citationThreshold = citationValues[thresholdIndex] || 0;
+                searchData = data;
+                query_id = query
+                // 获取数据中的最早和最晚日期
+                var dates = data.nodes.map(node => new Date(node.published));
+                startDate = new Date(Math.min.apply(null, dates));
+                endDate = new Date(Math.max.apply(null, dates));
+                currentStartDate = startDate;
+                currentEndDate = endDate;
 
-                var option = {
-                    title: {
-                        text: 'Paper Citation Network'
-                    },
-                    tooltip: {
-                        formatter: function (params) {
-                            if (params.dataType === 'node') {
-                                return '<strong>' + params.data.title + '</strong><br/>' +
-                                    'ID: ' + params.data.entry_id + '<br/>' +
-                                    'Year: ' + params.data.published + '<br/>' +
-                                    'Citations: ' + (citationCount[params.data.entry_id] || 0);
-                                'Color: ' + params.color + ' (represents publication date)';
-                            }
-                            return params.name;
-                        }
-                    },
-                    animationDurationUpdate: 1500,
-                    animationEasingUpdate: 'quinticInOut',
-                    legend: {
-                        data: ['Early publications', 'Recent publications'],
-                        left: 'right'
-                    },
+                // 更新滑动条
+                $("#date-slider").slider("option", "min", dateToTimestamp(startDate));
+                $("#date-slider").slider("option", "max", dateToTimestamp(endDate));
+                $("#date-slider").slider("values", [dateToTimestamp(startDate), dateToTimestamp(endDate)]);
+                $("#date-range").text(formatDate(startDate) + " - " + formatDate(endDate));
 
-                    series: [{
-                        type: 'graph',
-                        layout: 'force',
-                        roam: true,
-                        draggable: true,  // 使节点可拖动
-                        edgeSymbol: ['circle', 'arrow'],
-                        edgeSymbolSize: [4, 10],
-                        edgeLabel: {
-                            fontSize: 20
-                        },
-                        categories: [
-                            {
-                                name: 'Early publications',
-                                itemStyle: {
-                                    color: 'blue'
-                                }
-                            },
-                            {
-                                name: 'Recent publications',
-                                itemStyle: {
-                                    color: 'red'
-                                }
-                            }
-                        ],
-                        emphasis: {
-                          focus: 'adjacency',
-                          label: {
-                            position: 'right',
-                            show: true
-                          }
-                        },
-                        data: data.nodes.map(function (node) {
-                            var citations = citationCount[node.entry_id] || 0;
-                            return {
-                                id: node.entry_id,
-                                name: node.title,
-                                title: node.title,
-                                entry_id: node.entry_id,
-                                published: node.published,
-                                symbolSize: 20 + Math.log(citationCount[node.entry_id] || 0) * 10, // 根据引用次数调整大小
-                                x: null,  // 允许力导向算法初始化位置
-                                y: null,
-                                fixed: false,  // 节点初始不固定
-                                itemStyle: {
-                                    color: getColorByDate(node.published)
-                                },
-                                label: {
-                                    show: citations >= citationThreshold,
-                                    formatter: '{b}'
-                                },
-                            };
-                        }),
-                        links: data.links.map(function (link) {
-                            return {
-                                source: link.source,
-                                target: link.target
-                            };
-                        }),
-                        lineStyle: {
-                            opacity: 0.9,
-                            width: 2,
-                            curveness: 0
-                        },
-                        force: {
-                            repulsion: 500,
-//                            edgeLength: 300  // 可以调整这个值来改变节点间的距离
-                        }
+                updateChart();
 
-                    }]
-                };
-                myChart.setOption(option);
+                // 启用滑动条
+                $("#date-slider").slider("enable");
 
                 // 添加左键点击事件
                 myChart.on('click', function (params) {
@@ -140,18 +178,8 @@ $(document).ready(function () {
                 // 添加右键点击事件
                 myChart.on('contextmenu', function (params) {
                     if (params.dataType === 'node') {
-                        // 阻止默认的右键菜单
                         params.event.event.preventDefault();
-                        // 使用节点的 entry_id 作为新的查询值
                         performSearch(params.data.entry_id);
-                    }
-                });
-
-                // 添加拖拽结束事件
-                myChart.on('dragend', function (params) {
-                    if (params.dataType === 'node') {
-                        // 可以在这里添加拖拽结束后的逻辑
-                        console.log('Node dragged:', params.data);
                     }
                 });
             }
@@ -162,4 +190,25 @@ $(document).ready(function () {
         var query = $('#search-input').val();
         performSearch(query);
     });
+
+    // 初始化日期滑动条
+    $("#date-slider").slider({
+        range: true,
+        min: dateToTimestamp(new Date('1900-01-01')),
+        max: dateToTimestamp(new Date()),
+        step: 86400000, // 一天的毫秒数
+        values: [dateToTimestamp(new Date('1900-01-01')), dateToTimestamp(new Date())],
+        slide: function (event, ui) {
+            var startDate = timestampToDate(ui.values[0]);
+            var endDate = timestampToDate(ui.values[1]);
+            $("#date-range").text(formatDate(startDate) + " - " + formatDate(endDate));
+            currentStartDate = startDate;
+            currentEndDate = endDate;
+            updateChart();
+        }
+    });
+    $("#date-range").text(formatDate(new Date('1900-01-01')) + " - " + formatDate(new Date()));
+
+    // 初始时禁用滑动条
+    $("#date-slider").slider("disable");
 });

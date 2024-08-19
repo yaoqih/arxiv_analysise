@@ -1,52 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 
-    <title>Paper Citation Network</title>
-    <script src="https://lib.baomitu.com/echarts/5.5.0/echarts.js"></script>
-    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-5SSWCR3TL4"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <title>Paper Citation Network</title>
+  <script src="https://lib.baomitu.com/echarts/5.5.0/echarts.js"></script>
+  <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
 
-  gtag('config', 'G-5SSWCR3TL4');
-</script>
-<style>
-  .image-container {
-      display: none; /* 默认不显示图片 */
-      position: absolute; /* 绝对定位 */
-      z-index: 10; /* 确保图片在按钮上方显示 */
-  }
-</style>
+  <!-- jQuery UI CSS -->
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+
+  <!-- jQuery UI JavaScript -->
+  <script src="https://cdn.bootcdn.net/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-5SSWCR3TL4"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-5SSWCR3TL4');
+  </script>
+
 </head>
-<body>
-    <input type="text" id="search-input" placeholder="Enter arxiv id">
-    <button id="search-button">Search</button>
-    <button class="button" onmouseover="showImage()" onmouseout="hideImage()">关注作者公众号</button>
-    <a href="https://arxiv.org/" target="_blank">前往arxiv</a>
-    <div class="image-container" id="myImage">
-      <img src="{{ url_for('static', filename='qrcode_for.jpg') }}" alt="作者公众号" />
-    </div>
-    <div id="chart" style="width: 100vw; height: 100vh;"></div>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<body>
+  <input type="text" id="search-input" placeholder="Enter arxiv id">
+  <button id="search-button">Search</button>
+  <button class="button" onmouseover="showImage()" onmouseout="hideImage()">关注作者公众号</button>
+  <a href="https://arxiv.org/" target="_blank">前往arxiv</a>
+  <div class="image-container" id="myImage">
+    <img src="{{ url_for('static', filename='qrcode_for.jpg') }}" alt="作者公众号" />
+  </div>
+  <div id="filter-container">
+    <p id="filter">
+    <p>Date range: <span id="date-range"></span></p>
+    <div id="date-slider"></div>
+    </p>
+  </div>
+
+  <div id="chart" style="width: 98vw; height: 96vh;"></div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 <script>
+
   function showImage() {
-      const imageContainer = document.getElementById('myImage');
-      imageContainer.style.display = 'block'; // 显示图片
+    const imageContainer = document.getElementById('myImage');
+    imageContainer.style.display = 'block'; // 显示图片
   }
 
   function hideImage() {
-      const imageContainer = document.getElementById('myImage');
-      imageContainer.style.display = 'none'; // 隐藏图片
+    const imageContainer = document.getElementById('myImage');
+    imageContainer.style.display = 'none'; // 隐藏图片
   }
 </script>
+<style>
+  .image-container {
+    display: none;
+    /* 默认不显示图片 */
+    position: absolute;
+    /* 绝对定位 */
+    z-index: 10;
+    /* 确保图片在按钮上方显示 */
+  }
+
+  #filter-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    /* 确保它显示在其他内容之上 */
+  }
+</style>
 
 </html>
