@@ -77,15 +77,46 @@ $(document).ready(function () {
 
         var option = {
             tooltip: {
+                confine: true, // 将 tooltip 限制在图表区域内
+                enterable: true, // 允许鼠标进入 tooltip
+                appendToBody: true,
                 formatter: function (params) {
                     if (params.dataType === 'node') {
-                        return '<strong>' + params.data.title + '</strong><br/>' +
-                            'ID: ' + params.data.entry_id + '<br/>' +
-                            'Date: ' + params.data.published + '<br/>' +
-                            'Citations: ' + (citationCount[params.data.entry_id] || 0);
+                        return '<div style="max-width: 500px; width: 500px; white-space: normal; word-break: break-all; overflow-wrap: break-word;">' +
+                            '<strong style="display: block; margin-bottom: 5px;">' + params.data.title + '</strong>' +
+                            '<span style="display: block;">ID: ' + params.data.entry_id + '</span>' +
+                            '<span style="display: block;">Date: ' + params.data.published + '</span>' +
+                            '<span style="display: block;">Citations: ' + (citationCount[params.data.entry_id] || 0) + '</span>' +
+                            '</div>';
                     }
-                    return params.name;
+                    return null;
+                },
+                position: function (point, params, dom, rect, size) {
+                    // 计算 tooltip 的位置
+                    var x = point[0];
+                    var y = point[1];
+                    var viewWidth = size.viewSize[0];
+                    var viewHeight = size.viewSize[1];
+                    var boxWidth = size.contentSize[0];
+                    var boxHeight = size.contentSize[1];
+                    var posX = x + 15;
+                    var posY = y + 15;
+
+                    // 当 tooltip 超出右边界时
+                    if (posX + boxWidth > viewWidth) {
+                        posX = x - boxWidth - 15;
+                    }
+                    // 当 tooltip 超出下边界时
+                    if (posY + boxHeight > viewHeight) {
+                        posY = y - boxHeight - 15;
+                    }
+
+                    return [posX, posY];
                 }
+            },
+            textStyle: {
+                width: 300,
+                overflow: 'break'
             },
             animationDurationUpdate: 1500,
             animationEasingUpdate: 'quinticInOut',
@@ -102,6 +133,7 @@ $(document).ready(function () {
                         title: node.title,
                         entry_id: node.entry_id,
                         published: node.published,
+                        depth: node.depth,
                         symbolSize: 20 + Math.log(citations || 1) * 20,
                         x: null,
                         y: null,
@@ -121,19 +153,24 @@ $(document).ready(function () {
                         target: link.target
                     };
                 }),
+                edgeSymbol: ['circle', 'arrow'],
+                edgeSymbolSize: [4, 10],
                 force: {
                     repulsion: 500,
                     edgeLength: 200
                 },
                 symbol: function (value, params) {
-                    // 使用字符串变量创建正则表达式
-                    let regex = new RegExp(query_id);
-
                     // 使用正则表达式匹配ID
-                    if (regex.test(params.data.entry_id)) {
+                    if (params.data.depth == 0) {
+                         return 'circle';  // 默认形状为圆形
+                    }
+                    else if (Math.abs(params.data.depth) == 1) {
                         return 'diamond';  // 将匹配的节点形状设置为菱形
                     }
-                    return 'circle';  // 默认形状为圆形
+                    else return 'triangle';  // 将匹配的节点形状设置为菱形
+                }
+                , emphasis: {
+                    focus: 'adjacency',
                 }
             }]
         };
@@ -141,12 +178,14 @@ $(document).ready(function () {
     }
 
     function performSearch(query) {
+        $("#search-button").attr("disabled","true");
         myChart.showLoading();
         $.ajax({
             url: '/search',
             method: 'POST',
             data: { query: query },
             success: function (data) {
+                $("#search-button").removeAttr("disabled");
                 myChart.hideLoading();
                 searchData = data;
                 query_id = query
@@ -182,6 +221,18 @@ $(document).ready(function () {
                         performSearch(params.data.entry_id);
                     }
                 });
+            },
+            error : function(e){
+                $("#search-button").removeAttr("disabled");
+                myChart.hideLoading();
+                if (e.status==429)
+                window.alert("请求太快了，服务器受不了了！！！")
+                if (e.status==404)
+                window.alert("没有找到这篇论文呢。")
+                if (e.status==408)
+                window.alert("糟糕！遇见了超级节点，如果特别需要请联系作者。")
+                if (e.status==500)
+                window.alert("糟糕！bug了，请联系作者")
             }
         });
     }

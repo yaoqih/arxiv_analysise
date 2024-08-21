@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 
   <title>Paper Citation Network</title>
@@ -75,7 +75,11 @@
     width: 100%;
     z-index: 1000;
     /* 确保它显示在其他内容之上 */
-  }
+  }body {
+  overscroll-behavior-y: contain;
+  overscroll-behavior-x: contain;
+}
+
 </style>
 
 </html>

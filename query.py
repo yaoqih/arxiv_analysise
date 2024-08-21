@@ -16,20 +16,22 @@ def find_neighbors(entry_id, depth=2):
     nodes = []
     links = []
     def dfs_down(current_id, current_depth):
-        if current_depth > depth:
-            return
         if current_id in visited:
             return
         visited.add(current_id)
 
         # 找到当前论文
-        current_paper = collection.find_one({'entry_id': current_id})
+        current_paper = collection.find_one({'entry_id': current_id},{"entry_id":1,"title":1,"published":1,"refer_ids":1,"refered_ids":1})
         if not current_paper:
             return
         current_paper.pop('_id')
+        current_paper['depth']=-current_depth
         # 添加到节点列表
         nodes.append({**{'id': current_id}, **current_paper})
-
+        if len(nodes)>2000:
+            return None
+        if current_depth+1 > depth:
+            return
         # 找出引用的论文
         for neighbor_id in current_paper.get('refer_ids', []):
             if neighbor_id not in visited:
@@ -37,33 +39,28 @@ def find_neighbors(entry_id, depth=2):
                 dfs_down(neighbor_id, current_depth + 1)
 
     def dfs_up(current_id, current_depth):
-        if current_depth > depth:
-            return
         if current_id in visited:
             return
         visited.add(current_id)
 
         # 找到当前论文
-        current_paper = collection.find_one({'entry_id': current_id})
+        current_paper = collection.find_one({'entry_id': current_id},{"entry_id":1,"title":1,"published":1,"refer_ids":1,"refered_ids":1})
         if not current_paper:
             return
         current_paper.pop('_id')
+        current_paper['depth']=current_depth
         # 添加到节点列表
         if {**{'id': current_id}, **current_paper}not in nodes:
             nodes.append({**{'id': current_id}, **current_paper})
-
+        if len(nodes)>2000:
+            return None
+        if current_depth+1 > depth:
+            return
         # 找出引用了当前论文的论文
-        # for neighbor_id in current_paper.get('refered_ids', []):
-        #     if neighbor_id not in visited:
-        #         links.append({'source': neighbor_id, 'target': current_id, 'id': len(links)})
-        #         dfs_up(neighbor_id, current_depth + 1)
-
-        cursor = collection.find({'refer_ids': current_id})
-        for citing_paper in cursor:
-            citing_id = citing_paper['entry_id']
-            if citing_id not in visited:
-                links.append({'source': citing_id, 'target': current_id, 'id': len(links)})
-                dfs_up(citing_id, current_depth + 1)
+        for neighbor_id in current_paper.get('refered_ids', []):
+            if neighbor_id not in visited:
+                links.append({'source': neighbor_id, 'target': current_id, 'id': len(links)})
+                dfs_up(neighbor_id, current_depth + 1)
 
     # 开始查找
     dfs_down(entry_id, 0)
@@ -72,9 +69,94 @@ def find_neighbors(entry_id, depth=2):
 
     return {'nodes': nodes, 'links': links}
 
+def find_neighbors_aggregation(entry_id, depth=2):
+    pipeline = [
+        # 从给定的entry_id开始
+        {"$match": {"entry_id": entry_id}},
+        
+        # 递归查找引用和被引用
+        {"$graphLookup": {
+            "from": collection.name,
+            "startWith": "$entry_id",
+            "connectFromField": "refer_ids",
+            "connectToField": "entry_id",
+            "as": "down_neighbors",
+            "maxDepth": depth,
+            "depthField": "depth"
+        }},
+        {"$graphLookup": {
+            "from": collection.name,
+            "startWith": "$entry_id",
+            "connectFromField": "entry_id",
+            "connectToField": "refer_ids",
+            "as": "up_neighbors",
+            "maxDepth": depth,
+            "depthField": "depth"
+        }},
+        
+        # 合并所有结果
+        {"$project": {
+            "all_neighbors": {
+                "$concatArrays": [
+                    [{"$mergeObjects": ["$$ROOT", {"depth": 0}]}],
+                    "$down_neighbors",
+                    "$up_neighbors"
+                ]
+            }
+        }},
+        {"$unwind": "$all_neighbors"},
+        {"$replaceRoot": {"newRoot": "$all_neighbors"}},
+        
+        # 去重
+        {"$group": {
+            "_id": "$entry_id",
+            "doc": {"$first": "$$ROOT"}
+        }},
+        {"$replaceRoot": {"newRoot": "$doc"}},
+        
+        # 生成节点和链接
+        {"$group": {
+            "_id": None,
+            "nodes": {"$push": {
+                "entry_id": "$entry_id",
+                "title": "$title",
+                "published": "$published",
+                "depth": "$depth",
+                "refered_ids": "$refered_ids"
+            }},
+            "links": {"$push": {
+                "$map": {
+                    "input": "$refer_ids",
+                    "as": "ref",
+                    "in": {
+                        "source": "$entry_id",
+                        "target": "$$ref"
+                    }
+                }
+            }}
+        }},
+        
+        # 展平链接数组
+        {"$project": {
+            "nodes": 1,
+            "links": {"$reduce": {
+                "input": "$links",
+                "initialValue": [],
+                "in": {"$concatArrays": ["$$value", "$$this"]}
+            }}
+        }}
+    ]
+    
+    result = list(collection.aggregate(pipeline))
+    
+    if result:
+        return result[0]
+    else:
+        return {"nodes": [], "links": []}
 
 # # 替换为你要查询的起始论文的entry_id
 # entry_id = 'http://arxiv.org/abs/2106.13008v5'
+# print(find_neighbors_aggregation(entry_id=entry_id))
 #
 # # 获取三度之内的邻居
 # result = find_neighbors(entry_id)
