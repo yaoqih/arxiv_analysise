@@ -228,7 +228,7 @@ $(document).ready(function () {
                 if (e.status==429)
                 window.alert("请求太快了，服务器受不了了！！！")
                 if (e.status==404)
-                window.alert("没有找到这篇论文呢。")
+                window.alert("没有找到这篇论文呢,请检查输入的arxiv id。")
                 if (e.status==408)
                 window.alert("糟糕！遇见了超级节点，如果特别需要请联系作者。")
                 if (e.status==500)

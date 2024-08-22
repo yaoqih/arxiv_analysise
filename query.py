@@ -13,6 +13,8 @@ collection = db['data']
 
 def find_neighbors(entry_id, depth=2):
     visited = set()
+    nodes_dict = {}
+
     nodes = []
     links = []
     def dfs_down(current_id, current_depth):
@@ -27,7 +29,9 @@ def find_neighbors(entry_id, depth=2):
         current_paper.pop('_id')
         current_paper['depth']=-current_depth
         # 添加到节点列表
-        nodes.append({**{'id': current_id}, **current_paper})
+        # if {**{'id': current_id}, **current_paper}not in nodes:
+        #     nodes.append({**{'id': current_id}, **current_paper})
+        nodes_dict[current_id] = {**{'id': current_id}, **current_paper}
         if len(nodes)>2000:
             return None
         if current_depth+1 > depth:
@@ -49,9 +53,10 @@ def find_neighbors(entry_id, depth=2):
             return
         current_paper.pop('_id')
         current_paper['depth']=current_depth
+        nodes_dict[current_id] = {**{'id': current_id}, **current_paper}
         # 添加到节点列表
-        if {**{'id': current_id}, **current_paper}not in nodes:
-            nodes.append({**{'id': current_id}, **current_paper})
+        # if {**{'id': current_id}, **current_paper}not in nodes:
+        #     nodes.append({**{'id': current_id}, **current_paper})
         if len(nodes)>2000:
             return None
         if current_depth+1 > depth:
@@ -67,7 +72,7 @@ def find_neighbors(entry_id, depth=2):
     visited.clear()  # 清除访问记录以便重新查找
     dfs_up(entry_id, 0)
 
-    return {'nodes': nodes, 'links': links}
+    return {'nodes': list(nodes_dict.values()), 'links': links}
 
 def find_neighbors_aggregation(entry_id, depth=2):
     pipeline = [
@@ -153,16 +158,27 @@ def find_neighbors_aggregation(entry_id, depth=2):
         return result[0]
     else:
         return {"nodes": [], "links": []}
-
-# # 替换为你要查询的起始论文的entry_id
-# entry_id = 'http://arxiv.org/abs/2106.13008v5'
-# print(find_neighbors_aggregation(entry_id=entry_id))
-#
-# # 获取三度之内的邻居
-# result = find_neighbors(entry_id)
-#
-# # 保存为JSON文件
-# with open('result.json', 'w') as f:
-#     json.dump(result, f, indent=4,default=datetime_converter)
-#
-# print("结果已保存为result.json")
+if __name__=="__main__":
+    # # 替换为你要查询的起始论文的entry_id
+    entry_id = 'http://arxiv.org/abs/2405.06211v3'
+    # print(find_neighbors_aggregation(entry_id=entry_id))
+    #
+    # # 获取三度之内的邻居
+    def has_duplicate_ids(list_of_lists):
+        seen_ids = set()  # 用于存储已见的 ID
+        for sublist in list_of_lists:
+            if sublist:  # 确保子列表不为空
+                item_id = sublist['id']  # 假设 ID 在每个子列表的第一个位置
+                if item_id in seen_ids:
+                    return True  # 找到重复 ID
+                seen_ids.add(item_id)  # 添加到集合中
+        return False  # 没有重复 ID
+    result = find_neighbors(entry_id)
+    print(has_duplicate_ids(result['nodes']))
+    open('result.txt','w').write('\n'.join([i["id"] for i in result['nodes']]))
+    #
+    # # # 保存为JSON文件
+    # with open('result.json', 'w') as f:
+    #     json.dump(result, f, indent=4,default=datetime_converter)
+    #
+    # print("结果已保存为result.json")
