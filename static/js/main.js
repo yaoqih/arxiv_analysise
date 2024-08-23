@@ -241,6 +241,10 @@ $(document).ready(function () {
         var query = $('#search-input').val();
         performSearch(query);
     });
+    $('#try_one_try').click(function () {
+        var query = "2106.13008";
+        performSearch(query);
+    });
 
     // 初始化日期滑动条
     $("#date-slider").slider({
