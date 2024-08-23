@@ -69,6 +69,7 @@ def translate_dict(arixv_result):
         "downloaded":False,
         "arxiv_pdf_error":False,
         "connect_extract":False,
+        "connect_extract_title":False
     }
 def get_paper_infos(year,month):
     if start_number:=process_record.find_one({"year":year,"month":month}):

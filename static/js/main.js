@@ -86,6 +86,7 @@ $(document).ready(function () {
                             '<strong style="display: block; margin-bottom: 5px;">' + params.data.title + '</strong>' +
                             '<span style="display: block;">ID: ' + params.data.entry_id + '</span>' +
                             '<span style="display: block;">Date: ' + params.data.published + '</span>' +
+                             '<span style="display: block;">Depth: ' + params.data.depth + '</span>' +
                             '<span style="display: block;">Citations: ' + (citationCount[params.data.entry_id] || 0) + '</span>' +
                             '</div>';
                     }
@@ -150,7 +151,10 @@ $(document).ready(function () {
                 links: filteredLinks.map(function (link) {
                     return {
                         source: link.source,
-                        target: link.target
+                        target: link.target,
+                        lineStyle: {
+                            color: getColorByDate(filteredNodes.find(node => node.entry_id === link.source).published)
+                        }
                     };
                 }),
                 edgeSymbol: ['circle', 'arrow'],

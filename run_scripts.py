@@ -4,7 +4,8 @@ import subprocess
 python_files = [
     "spider.py",
     "pdf_download.py",
-    "connect_extract.py"
+    "connect_extract.py",
+    "title_refered.py"
 ]
 
 # 依次运行每个Python文件
